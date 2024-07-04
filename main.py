@@ -79,7 +79,8 @@ if __name__ == "__main__":
     for image_file in image_files:
         # Input and output paths
         input_path = os.path.join(current_directory, image_file)
-        output_path = os.path.join(current_directory, image_file[:-4] + '_output.png')
+        base_filename, file_extension = os.path.splitext(image_file)
+        output_path = os.path.join(current_directory, base_filename + '_output.png')
         
         # Calculate pixel size
         pixel_size = calculate_pixel_size(input_path)
