@@ -1,7 +1,20 @@
 import os
 from PIL import Image
 
-def calculate_pixel_size(image_path):
+def color_difference(color1, color2, threshold):
+    """ 
+    Calculate the difference between two RGB colors.
+    Returns True if the difference is greater than the threshold, False otherwise.
+    """
+    r1, g1, b1 = color1
+    r2, g2, b2 = color2
+    
+    # Calculate Euclidean distance between colors
+    distance = ((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2) ** 0.5
+    
+    return distance > threshold
+
+def calculate_pixel_size(image_path, threshold=85):
     # Open the image
     img = Image.open(image_path)
     
@@ -17,7 +30,7 @@ def calculate_pixel_size(image_path):
         current_color = img.getpixel((x, 0))
         
         # Compare current pixel color with the initial color
-        if current_color != initial_color:
+        if color_difference(current_color, initial_color, threshold):
             pixel_size = x  # This is the size of the pixels
             break
     
@@ -66,10 +79,12 @@ if __name__ == "__main__":
     for image_file in image_files:
         # Input and output paths
         input_path = os.path.join(current_directory, image_file)
-        output_path = os.path.join(current_directory, image_file[:-4] + '_output' + image_file[-4:])
+        output_path = os.path.join(current_directory, image_file[:-4] + '_output.png')
         
         # Calculate pixel size
         pixel_size = calculate_pixel_size(input_path)
+        
+        print(f"Calculated pixel size is: {pixel_size}")
         
         # Generate pixel art
         generate_pixel_art(input_path, output_path, pixel_size)
