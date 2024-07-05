@@ -44,9 +44,18 @@ def generate_pixel_art(input_path, output_path, pixel_size):
     # Get the dimensions of the original image
     width, height = original_image.size
 
+    # Adjust the width and height to be divisible by pixel_size
+    adjusted_width = (width + pixel_size - 1) // pixel_size * pixel_size
+    adjusted_height = (height + pixel_size - 1) // pixel_size * pixel_size
+
+    # Resize the original image to the adjusted dimensions
+    if (adjusted_width, adjusted_height) != (width, height):
+        original_image = original_image.resize((adjusted_width, adjusted_height))
+        original_pixels = original_image.load()
+
     # Calculate the dimensions of the output image
-    output_width = width // pixel_size
-    output_height = height // pixel_size
+    output_width = adjusted_width // pixel_size
+    output_height = adjusted_height // pixel_size
 
     # Create a new image for the output
     output_image = Image.new('RGB', (output_width, output_height))
