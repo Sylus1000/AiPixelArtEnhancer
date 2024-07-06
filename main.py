@@ -16,10 +16,10 @@ def calculate_avg_pixel_size(image_path, lower_threshold=50, upper_threshold=50)
     # Apply Canny edge detection
     edges = cv2.Canny(pixel_image, lower_threshold, upper_threshold)
     
-    # Save the Canny edge-detected image
-    edges_image = Image.fromarray(edges)
-    base_filename, file_extension = os.path.splitext(image_file)
-    edges_image.save(os.path.join(base_filename + '_edges.png'))
+    # # Save the Canny edge-detected image
+    # edges_image = Image.fromarray(edges)
+    # base_filename, file_extension = os.path.splitext(image_file)
+    # edges_image.save(os.path.join(base_filename + '_edges.png'))
 
     # Initialize lists to store distances
     horizontal_distances = []
