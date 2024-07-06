@@ -1,40 +1,59 @@
 import os
 from PIL import Image
+import numpy as np
+import cv2
 
-def color_difference(color1, color2, threshold):
-    """ 
-    Calculate the difference between two RGB colors.
-    Returns True if the difference is greater than the threshold, False otherwise.
-    """
-    r1, g1, b1 = color1
-    r2, g2, b2 = color2
-    
-    # Calculate Euclidean distance between colors
-    distance = ((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2) ** 0.5
-    
-    return distance > threshold
-
-def calculate_pixel_size(image_path, threshold=85):
-    # Open the image
+def calculate_avg_pixel_size(image_path, lower_threshold=50, upper_threshold=50):
+    # Open the image file
     img = Image.open(image_path)
+
+    # Convert image to grayscale for edge detection
+    img_gray = img.convert('L')
+
+    # Convert the image to a numpy array
+    pixel_image = np.array(img_gray)
+
+    # Apply Canny edge detection
+    edges = cv2.Canny(pixel_image, lower_threshold, upper_threshold)
     
-    # Get image size (width, height)
-    width, height = img.size
-    
-    # Start scanning from the top left corner (0, 0) to (width, 0)
-    initial_color = img.getpixel((0, 0))  # Get the color of the top-left pixel
-    pixel_size = 1  # Initialize the pixel size
-    
-    # Scan horizontally across the top row
-    for x in range(1, width):
-        current_color = img.getpixel((x, 0))
-        
-        # Compare current pixel color with the initial color
-        if color_difference(current_color, initial_color, threshold):
-            pixel_size = x  # This is the size of the pixels
-            break
-    
-    return pixel_size
+    # Save the Canny edge-detected image
+    edges_image = Image.fromarray(edges)
+    base_filename, file_extension = os.path.splitext(image_file)
+    edges_image.save(os.path.join(base_filename + '_edges.png'))
+
+    # Initialize lists to store distances
+    horizontal_distances = []
+    vertical_distances = []
+
+    # Get dimensions of the image
+    height, width = edges.shape
+
+    # Calculate horizontal distances between edges
+    for y in range(height):
+        edge_indices = np.where(edges[y] > 0)[0]
+        if len(edge_indices) > 1:
+            distances = np.diff(edge_indices)
+            horizontal_distances.extend(distances)
+
+    # Calculate vertical distances between edges
+    for x in range(width):
+        edge_indices = np.where(edges[:, x] > 0)[0]
+        if len(edge_indices) > 1:
+            distances = np.diff(edge_indices)
+            vertical_distances.extend(distances)
+
+    # Combine horizontal and vertical distances
+    all_distances = horizontal_distances + vertical_distances
+
+    if all_distances:
+        avg_distance = np.mean(all_distances)
+        max_distance = np.max(all_distances)
+        min_distance = np.min(all_distances)
+    else:
+        avg_distance = max_distance = min_distance = 0
+
+    return int(avg_distance), int(max_distance), int(min_distance)
+
 
 def generate_pixel_art(input_path, output_path, pixel_size):
     # Open the input image
@@ -92,11 +111,11 @@ if __name__ == "__main__":
         output_path = os.path.join(current_directory, base_filename + '_output.png')
         
         # Calculate pixel size
-        pixel_size = calculate_pixel_size(input_path)
+        avg, max, min = calculate_avg_pixel_size(input_path)
         
-        print(f"Calculated pixel size is: {pixel_size}")
+        print(f"Calculated pixel size is avg.: {avg}, max: {max}, min: {min}")
         
         # Generate pixel art
-        generate_pixel_art(input_path, output_path, pixel_size)
+        generate_pixel_art(input_path, output_path, avg)
         
         print(f"Processed {image_file} -> {output_path}")
