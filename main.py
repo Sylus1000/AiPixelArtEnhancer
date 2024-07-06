@@ -92,6 +92,44 @@ def generate_pixel_art(input_path, output_path, pixel_size):
 
     # Save the output image
     output_image.save(output_path, quality=100, subsampling=0)
+    return original_image, output_image
+    
+def resize_image(image, target_width, target_height):
+    # Calculate aspect ratio
+    aspect_ratio = image.width / image.height
+    
+    # Calculate new height based on aspect ratio
+    new_height = int(target_width / aspect_ratio)
+    
+    # Resize the image with LANCZOS interpolation for better quality
+    resized_image = image.resize((target_width, new_height), Image.NEAREST)
+    
+    return resized_image
+    
+def show_results(image1, image2):
+    # Determine which image is smaller
+    if image1.width < image2.width:
+        smaller_image = image1
+        larger_image = image2
+    else:
+        smaller_image = image2
+        larger_image = image1
+    
+    # Resize the smaller image to match the width of the larger image with interpolation
+    resized_smaller_image = resize_image(smaller_image, larger_image.width, larger_image.height)
+    
+    # Create a new image with white background
+    combined_image = Image.new('RGB', (larger_image.width + resized_smaller_image.width, larger_image.height), 'white')
+    
+    # Paste the larger image on the left side
+    combined_image.paste(larger_image, (0, 0))
+    
+    # Paste the resized smaller image on the right side
+    combined_image.paste(resized_smaller_image, (larger_image.width, 0))
+    
+    # Display or save the combined image as per your requirement
+    combined_image.show()
+    combined_image.save("./result_side_by_side.png", quality=100, subsampling=0)
     
 if __name__ == "__main__":
     # Get the current directory
@@ -111,11 +149,14 @@ if __name__ == "__main__":
         output_path = os.path.join(current_directory, base_filename + '_output.png')
         
         # Calculate pixel size
-        avg, max, min = calculate_avg_pixel_size(input_path)
+        avg_pixel_size, max_pixel_size, min_pixel_size = calculate_avg_pixel_size(input_path)
         
-        print(f"Calculated pixel size is avg.: {avg}, max: {max}, min: {min}")
+        print(f"Calculated pixel size is avg.: {avg_pixel_size}, max: {max_pixel_size}, min: {min_pixel_size}")
         
         # Generate pixel art
-        generate_pixel_art(input_path, output_path, avg)
+        original_image, output_image = generate_pixel_art(input_path, output_path, avg_pixel_size)
         
         print(f"Processed {image_file} -> {output_path}")
+        
+        # Show images
+        show_results(original_image, output_image)
