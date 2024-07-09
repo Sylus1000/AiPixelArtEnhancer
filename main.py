@@ -3,7 +3,7 @@ from PIL import Image
 import numpy as np
 import cv2
 
-def calculate_avg_pixel_size(image_path, lower_threshold=50, upper_threshold=50):
+def calculate_avg_pixel_size(image_path, lower_threshold=50, upper_threshold=50, output_edges=False):
     # Open the image file
     img = Image.open(image_path)
 
@@ -16,10 +16,11 @@ def calculate_avg_pixel_size(image_path, lower_threshold=50, upper_threshold=50)
     # Apply Canny edge detection
     edges = cv2.Canny(pixel_image, lower_threshold, upper_threshold)
     
-    # # Save the Canny edge-detected image
-    # edges_image = Image.fromarray(edges)
-    # base_filename, file_extension = os.path.splitext(image_file)
-    # edges_image.save(os.path.join(base_filename + '_edges.png'))
+    # Save the Canny edge-detected image
+    if(output_edges):
+        edges_image = Image.fromarray(edges)
+        base_filename, file_extension = os.path.splitext(image_file)
+        edges_image.save(os.path.join(base_filename + '_edges.png'))
 
     # Initialize lists to store distances
     horizontal_distances = []
@@ -73,38 +74,28 @@ def generate_pixel_art(input_path, output_path, pixel_size):
         original_pixels = original_image.load()
 
     # Calculate the dimensions of the output image
-    output_width = adjusted_width // pixel_size
-    output_height = adjusted_height // pixel_size
+    output_width = adjusted_width
+    output_height = adjusted_height
 
     # Create a new image for the output
     output_image = Image.new('RGB', (output_width, output_height))
 
     # Iterate through the original image and draw large pixels in the output image
-    for y in range(output_height):
-        for x in range(output_width):
+    for y in range(0, adjusted_height, pixel_size):
+        for x in range(0, adjusted_width, pixel_size):
             # Get the color of the current pixel
-            color = original_pixels[x * pixel_size, y * pixel_size]
+            color = original_pixels[x, y]
 
             # Draw the large pixel in the output image
             for dy in range(pixel_size):
                 for dx in range(pixel_size):
-                    output_image.putpixel((x, y), color)
+                    if x + dx < adjusted_width and y + dy < adjusted_height:
+                        output_image.putpixel((x + dx, y + dy), color)
 
     # Save the output image
     output_image.save(output_path, quality=100, subsampling=0)
     return original_image, output_image
     
-def resize_image(image, target_width, target_height):
-    # Calculate aspect ratio
-    aspect_ratio = image.width / image.height
-    
-    # Calculate new height based on aspect ratio
-    new_height = int(target_width / aspect_ratio)
-    
-    # Resize the image with LANCZOS interpolation for better quality
-    resized_image = image.resize((target_width, new_height), Image.NEAREST)
-    
-    return resized_image
     
 def show_results(image1, image2):
     # Determine which image is smaller
@@ -116,7 +107,7 @@ def show_results(image1, image2):
         larger_image = image1
     
     # Resize the smaller image to match the width of the larger image with interpolation
-    resized_smaller_image = resize_image(smaller_image, larger_image.width, larger_image.height)
+    resized_smaller_image = smaller_image.resize((larger_image.width, larger_image.height), Image.NEAREST)
     
     # Create a new image with white background
     combined_image = Image.new('RGB', (larger_image.width + resized_smaller_image.width, larger_image.height), 'white')
