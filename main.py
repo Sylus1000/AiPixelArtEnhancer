@@ -94,4 +94,4 @@ if __name__ == "__main__":
         original_image, output_image = generate_pixel_art(input_path, output_path, avg_pixel_size)
         print(f"Processed {image_file} -> {output_path}")
 
-        show_results(original_image, output_image)
+        #show_results(original_image, output_image)
